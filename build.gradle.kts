@@ -1,5 +1,6 @@
 plugins {
     id("java")
+    id("me.champeau.jmh") version "0.6.8"
 }
 
 group = "de.sirywell"
@@ -16,4 +17,8 @@ dependencies {
 
 tasks.getByName<Test>("test") {
     useJUnitPlatform()
+}
+
+jmh {
+    resultFormat.set("json")
 }

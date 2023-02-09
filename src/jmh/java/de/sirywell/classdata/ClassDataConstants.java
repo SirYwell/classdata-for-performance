@@ -1,5 +1,12 @@
-package benchmark;
+package de.sirywell.classdata;
 
+import java.lang.constant.ConstantDescs;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.util.concurrent.TimeUnit;
+import java.util.random.RandomGenerator;
+import java.util.random.RandomGeneratorFactory;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -12,19 +19,6 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.infra.Blackhole;
 
-import java.lang.constant.ConstantDescs;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Comparator;
-import java.util.concurrent.TimeUnit;
-import java.util.random.RandomGenerator;
-import java.util.random.RandomGeneratorFactory;
-
-import static benchmark.ClassDataConstants.Divisor.forDivisor;
-
 @Fork(value = 1)
 @BenchmarkMode(Mode.Throughput)
 @Measurement(iterations = 2)
@@ -34,15 +28,14 @@ import static benchmark.ClassDataConstants.Divisor.forDivisor;
 public class ClassDataConstants {
 
   private static final byte[] classBytes;
-  private static final RandomGeneratorFactory<RandomGenerator.LeapableGenerator> randomGeneratorFactory;
+  private static final RandomGeneratorFactory<RandomGenerator> randomGeneratorFactory;
 
   static {
-    randomGeneratorFactory = RandomGeneratorFactory.all().filter(RandomGeneratorFactory::isLeapable)
-        .map(f -> (RandomGeneratorFactory<RandomGenerator.LeapableGenerator>) (RandomGeneratorFactory<?>) f)
-        .max(Comparator.comparingInt(RandomGeneratorFactory::stateBits))
-        .orElseThrow(UnsupportedOperationException::new);
+    randomGeneratorFactory = RandomGeneratorFactory.getDefault();
     try {
-      classBytes = Files.readAllBytes(Path.of("build/classes/java/jmh/benchmark", "ClassDataConstants$CalculateIndexBase.class"));
+      Class<ClassDataConstants> ourClass = ClassDataConstants.class;
+      String name = ourClass.getName().replace('.', '/') + "$CalculateIndexBase.class";
+      classBytes = ourClass.getClassLoader().getResourceAsStream(name).readAllBytes();
     } catch (Exception e) {
       e.printStackTrace();
       throw new RuntimeException(e);
@@ -60,7 +53,7 @@ public class ClassDataConstants {
     private final Division division;
 
     public Data() {
-      var generator = randomGeneratorFactory.create(123);
+      RandomGenerator generator = randomGeneratorFactory.create(123);
       dividends = new int[size * 6];
       for (int i = 0; i < size * 6; i++) {
         dividends[i] = generator.nextInt();
@@ -77,12 +70,12 @@ public class ClassDataConstants {
         );
         case "dynamic" -> createDynamic(divisors);
         case "handcraft" -> new Handcraft(
-            forDivisor(divisors[0]),
-            forDivisor(divisors[1]),
-            forDivisor(divisors[2]),
-            forDivisor(divisors[3]),
-            forDivisor(divisors[4]),
-            forDivisor(divisors[5])
+            Divisor.forDivisor(divisors[0]),
+            Divisor.forDivisor(divisors[1]),
+            Divisor.forDivisor(divisors[2]),
+            Divisor.forDivisor(divisors[3]),
+            Divisor.forDivisor(divisors[4]),
+            Divisor.forDivisor(divisors[5])
         );
         default -> throw new IllegalStateException("Unexpected value: " + variant);
       };
