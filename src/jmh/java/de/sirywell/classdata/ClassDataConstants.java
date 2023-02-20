@@ -4,6 +4,7 @@ import java.lang.constant.ConstantDescs;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.TimeUnit;
 import java.util.random.RandomGenerator;
 import java.util.random.RandomGeneratorFactory;
@@ -42,9 +43,9 @@ public class ClassDataConstants {
     }
   }
 
-  @Param({"1", "100", "100000"})
+  @Param({"1", "100"})
   private static int size;
-  @Param({"basic", "dynamic", "handcraft"})
+  @Param({"basic", "dynamic", "handcraft", "dynamic-direct"})
   private static String variant;
 
   @State(Scope.Benchmark)
@@ -69,6 +70,7 @@ public class ClassDataConstants {
             divisors[5]
         );
         case "dynamic" -> createDynamic(divisors);
+        case "dynamic-direct" -> createDynamicDirect(divisors);
         case "handcraft" -> new Handcraft(
             Divisor.forDivisor(divisors[0]),
             Divisor.forDivisor(divisors[1]),
@@ -136,6 +138,22 @@ public class ClassDataConstants {
     }
   }
 
+  private static Division createDynamicDirect(int[] divisors) {
+    MethodHandles.Lookup lookup;
+    try {
+      lookup = MethodHandles.lookup()
+              .defineHiddenClassWithClassData(classBytes, divisors, true);
+    } catch (IllegalAccessException e) {
+      throw new RuntimeException(e);
+    }
+    Class<?> impl = lookup.lookupClass();
+    try {
+      return (Division) impl.getDeclaredConstructor().newInstance();
+    } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   private static Dynamic createDynamic(int[] divisors) {
     try {
       MethodHandles.Lookup lookup = MethodHandles.lookup()
@@ -147,7 +165,7 @@ public class ClassDataConstants {
       MethodType dt = ct.appendParameterTypes(int.class);
       MethodType et = dt.appendParameterTypes(int.class);
       MethodType ft = et.appendParameterTypes(int.class);
-      String n = "divide";
+      String n = "divideStatic";
       return new Dynamic(
           lookup.findStatic(impl, n, at),
           lookup.findStatic(impl, n, bt),
@@ -312,7 +330,7 @@ public class ClassDataConstants {
   }
 
   @SuppressWarnings("unused") // we require the bytecode of this template class
-  private static class CalculateIndexBase {
+  static class CalculateIndexBase implements Division {
     private static final int A;
     private static final int B;
     private static final int C;
@@ -336,33 +354,63 @@ public class ClassDataConstants {
     }
 
 
-    public static int divide(int a, int b, int c, int d, int e, int f) {
+    public static int divideStatic(int a, int b, int c, int d, int e, int f) {
       return a / A + b / B + c / C + d / D + e / E + f / F;
     }
 
 
-    public static int divide(int a, int b, int c, int d, int e) {
+    public static int divideStatic(int a, int b, int c, int d, int e) {
       return a / A + b / B + c / C + d / D + e / E;
     }
 
 
-    public static int divide(int a, int b, int c, int d) {
+    public static int divideStatic(int a, int b, int c, int d) {
       return a / A + b / B + c / C + d / D;
     }
 
 
-    public static int divide(int a, int b, int c) {
+    public static int divideStatic(int a, int b, int c) {
       return a / A + b / B + c / C;
     }
 
 
-    public static int divide(int a, int b) {
+    public static int divideStatic(int a, int b) {
       return a / A + b / B;
     }
 
 
-    public static int divide(int a) {
+    public static int divideStatic(int a) {
       return a / A;
+    }
+
+    @Override
+    public int divide(int a, int b, int c, int d, int e, int f) {
+      return divideStatic(a, b, c, d, e, f);
+    }
+
+    @Override
+    public int divide(int a, int b, int c, int d, int e) {
+      return divideStatic(a, b, c, d, e);
+    }
+
+    @Override
+    public int divide(int a, int b, int c, int d) {
+      return divideStatic(a, b, c, d);
+    }
+
+    @Override
+    public int divide(int a, int b, int c) {
+      return divideStatic(a, b, c);
+    }
+
+    @Override
+    public int divide(int a, int b) {
+      return divideStatic(a, b);
+    }
+
+    @Override
+    public int divide(int a) {
+      return divideStatic(a);
     }
   }
 
