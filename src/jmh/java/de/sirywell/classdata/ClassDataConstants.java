@@ -10,6 +10,7 @@ import java.util.random.RandomGenerator;
 import java.util.random.RandomGeneratorFactory;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.CompilerControl;
 import org.openjdk.jmh.annotations.Fork;
 import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
@@ -84,6 +85,7 @@ public class ClassDataConstants {
     }
   }
 
+  @CompilerControl(CompilerControl.Mode.DONT_INLINE)
   @Benchmark
   public void divide1(Data data, Blackhole bh) {
     Division division = data.division;
@@ -93,6 +95,7 @@ public class ClassDataConstants {
     }
   }
 
+  @CompilerControl(CompilerControl.Mode.DONT_INLINE)
   @Benchmark
   public void divide2(Data data, Blackhole bh) {
     Division division = data.division;
@@ -102,6 +105,7 @@ public class ClassDataConstants {
     }
   }
 
+  @CompilerControl(CompilerControl.Mode.DONT_INLINE)
   @Benchmark
   public void divide3(Data data, Blackhole bh) {
     Division division = data.division;
@@ -111,6 +115,7 @@ public class ClassDataConstants {
     }
   }
 
+  @CompilerControl(CompilerControl.Mode.DONT_INLINE)
   @Benchmark
   public void divide4(Data data, Blackhole bh) {
     Division division = data.division;
@@ -120,6 +125,7 @@ public class ClassDataConstants {
     }
   }
 
+  @CompilerControl(CompilerControl.Mode.DONT_INLINE)
   @Benchmark
   public void divide5(Data data, Blackhole bh) {
     Division division = data.division;
@@ -129,6 +135,7 @@ public class ClassDataConstants {
     }
   }
 
+  @CompilerControl(CompilerControl.Mode.DONT_INLINE)
   @Benchmark
   public void divide6(Data data, Blackhole bh) {
     Division division = data.division;
